@@ -1,2 +1,8 @@
+# NPM stuff
+.next
+node_modules
+package-lock.json
+next-env.d.ts
+
 # Mac stuff
 .DS_Store
