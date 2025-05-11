@@ -1,6 +1,3 @@
-// API service for backend communication
-
-// Get the backend server URL from environment variable or use a default
 const BE_SERVER = process.env.NEXT_PUBLIC_BE_SERVER || "http://localhost:5000"
 
 /**
