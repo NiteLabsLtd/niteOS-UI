@@ -5,7 +5,7 @@ const BE_SERVER = process.env.NEXT_PUBLIC_BE_SERVER || "http://localhost:5000"
  */
 export async function fetchMotionGraphics(): Promise<any[]> {
   try {
-    const response = await fetch(`${BE_SERVER}/v1/motion_graphic`)
+    const response = await fetch(`${BE_SERVER}/api/v1/motion_graphic`)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch motion graphics: ${response.status}`)
@@ -23,7 +23,7 @@ export async function fetchMotionGraphics(): Promise<any[]> {
  */
 export async function fetchAlphaVideos(): Promise<any[]> {
   try {
-    const response = await fetch(`${BE_SERVER}/v1/alpha`)
+    const response = await fetch(`${BE_SERVER}/api/v1/alpha`)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch alpha videos: ${response.status}`)
