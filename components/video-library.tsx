@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { VideoFile } from "@/types/video"
-import { Search } from "lucide-react"
+import { Search, AlertCircle, Loader2 } from "lucide-react"
+import { fetchMotionGraphics, fetchAlphaVideos } from "@/services/api"
 
 interface VideoLibraryProps {
   type: "motion" | "alpha"
@@ -13,23 +13,54 @@ interface VideoLibraryProps {
 
 export default function VideoLibrary({ type, onSelect }: VideoLibraryProps) {
   const [searchTerm, setSearchTerm] = useState("")
+  const [videos, setVideos] = useState<VideoFile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock data
-  const motionVideos: VideoFile[] = [
-    { id: 1, name: "Air.mp4", type: "motion", thumbnail: "/placeholder.svg?height=100&width=100" },
-    { id: 2, name: "Bets.mp4", type: "motion", thumbnail: "/placeholder.svg?height=100&width=100" },
-    { id: 3, name: "lives.mp4", type: "motion", thumbnail: "/placeholder.svg?height=100&width=100" },
-    { id: 4, name: "Jess.mp4", type: "motion", thumbnail: "/placeholder.svg?height=100&width=100" },
-  ]
+  // Fetch videos from the API when the component mounts
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true)
+        setError(null)
 
-  const alphaVideos: VideoFile[] = [
-    { id: 5, name: "Alpha1.mp4", type: "alpha", thumbnail: "/placeholder.svg?height=100&width=100" },
-    { id: 6, name: "Alpha2.mp4", type: "alpha", thumbnail: "/placeholder.svg?height=100&width=100" },
-    { id: 7, name: "AlphaEffect.mp4", type: "alpha", thumbnail: "/placeholder.svg?height=100&width=100" },
-    { id: 8, name: "Transparent.mp4", type: "alpha", thumbnail: "/placeholder.svg?height=100&width=100" },
-  ]
+        let fetchedVideos: any[]
 
-  const videos = type === "motion" ? motionVideos : alphaVideos
+        if (type === "motion") {
+          fetchedVideos = await fetchMotionGraphics()
+        } else {
+          fetchedVideos = await fetchAlphaVideos()
+        }
+
+        // Transform the API response to match our VideoFile type
+        const transformedVideos: VideoFile[] = fetchedVideos.map((video, index) => ({
+          id: index + 1, // Generate an ID if not provided by the API
+          name: video.name || extractFilename(video.path),
+          type: type,
+          path: video.path,
+          // Use a placeholder thumbnail if not provided by the API
+          thumbnail: video.thumbnail || "/placeholder.svg?height=100&width=100",
+        }))
+
+        setVideos(transformedVideos)
+      } catch (err) {
+        console.error(`Error fetching ${type} videos:`, err)
+        setError(`Failed to load ${type} videos. Please try again later.`)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchVideos()
+  }, [type])
+
+  // Extract filename from path
+  const extractFilename = (path: string): string => {
+    if (!path) return "Unknown"
+    const parts = path.split("/")
+    return parts[parts.length - 1]
+  }
+
   const filteredVideos = videos.filter((video) => video.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   const handleDragStart = (e: React.DragEvent, video: VideoFile) => {
@@ -46,8 +77,6 @@ export default function VideoLibrary({ type, onSelect }: VideoLibraryProps) {
 
   return (
     <div className="w-1/2 p-4">
-      {" "}
-      {/* Increased padding from p-2 to p-4 */}
       <h2 className="text-lg font-medium mb-3">{type === "motion" ? "Motion Graphics" : "Alpha"}</h2>
       <div className="relative mb-3">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
@@ -59,20 +88,45 @@ export default function VideoLibrary({ type, onSelect }: VideoLibraryProps) {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+
       <div className="space-y-2 max-h-[calc(100%-5rem)] overflow-y-auto pr-1">
-        {filteredVideos.map((video) => (
-          <div
-            key={video.id}
-            className={`w-full py-2 px-3 text-left rounded cursor-grab ${
-              type === "motion" ? "bg-purple-900/50 hover:bg-purple-800/50" : "bg-orange-900/50 hover:bg-orange-800/50"
-            }`}
-            onClick={() => onSelect(video)}
-            draggable
-            onDragStart={(e) => handleDragStart(e, video)}
-          >
-            {video.name}
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>
-        ))}
+        ) : error ? (
+          <div className="bg-red-900/20 border border-red-800 rounded-md p-3 text-center">
+            <AlertCircle className="h-5 w-5 mx-auto mb-2 text-red-500" />
+            <p className="text-sm text-red-300">{error}</p>
+            <button
+              className="mt-2 px-3 py-1 bg-red-800 hover:bg-red-700 rounded text-xs"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </button>
+          </div>
+        ) : filteredVideos.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            {searchTerm ? "No matching files found" : "No files available"}
+          </div>
+        ) : (
+          filteredVideos.map((video) => (
+            <div
+              key={video.id}
+              className={`w-full py-2 px-3 text-left rounded cursor-grab ${
+                type === "motion"
+                  ? "bg-purple-900/50 hover:bg-purple-800/50"
+                  : "bg-orange-900/50 hover:bg-orange-800/50"
+              }`}
+              onClick={() => onSelect(video)}
+              draggable
+              onDragStart={(e) => handleDragStart(e, video)}
+            >
+              {video.name}
+              {video.path && <div className="text-xs text-gray-400 truncate mt-1">{video.path}</div>}
+            </div>
+          ))
+        )}
       </div>
     </div>
   )

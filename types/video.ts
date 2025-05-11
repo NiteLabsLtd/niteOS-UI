@@ -3,6 +3,7 @@ export interface VideoFile {
   name: string
   type: "motion" | "alpha"
   thumbnail?: string
+  path?: string // Path in the filesystem
 }
 
 export interface InteractionPropertySettings {
