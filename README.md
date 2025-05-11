@@ -9,6 +9,6 @@ npm install --force
 # Run the dev server
 
 ```bash
-npm next dev
+npm run dev
 ```
 
