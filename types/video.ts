@@ -1,9 +1,9 @@
 export interface VideoFile {
-  id: number
+  id: string
   name: string
   type: "motion" | "alpha"
   thumbnail?: string
-  path?: string // Path in the filesystem
+  path: string // Path in the filesystem
 }
 
 export interface InteractionPropertySettings {

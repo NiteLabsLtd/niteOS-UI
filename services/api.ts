@@ -1,6 +1,14 @@
 const BE_SERVER = process.env.NEXT_PUBLIC_BE_SERVER || "http://localhost:5000"
 
 /**
+ * Get the video stream URL for a given video path
+ */
+export function getVideoStreamUrl(id: string): string {
+  // Remove the base path since the API endpoint already includes it
+  return `${BE_SERVER}/api/v1/video/${id}`
+}
+
+/**
  * Fetch motion graphics videos from the backend
  */
 export async function fetchMotionGraphics(): Promise<any[]> {

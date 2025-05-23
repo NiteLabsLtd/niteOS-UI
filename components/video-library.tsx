@@ -34,7 +34,7 @@ export default function VideoLibrary({ type, onSelect }: VideoLibraryProps) {
 
         // Transform the API response to match our VideoFile type
         const transformedVideos: VideoFile[] = fetchedVideos.map((video, index) => ({
-          id: index + 1, // Generate an ID if not provided by the API
+          id: video.id,
           name: video.name || extractFilename(video.path),
           type: type,
           path: video.path,
