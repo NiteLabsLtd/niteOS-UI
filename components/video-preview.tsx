@@ -15,24 +15,12 @@ export default function VideoPreview({ video }: VideoPreviewProps) {
   const [error, setError] = useState<string | null>(null)
   const [previewPath, setPreviewPath] = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const loopTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = Math.floor(seconds % 60)
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
-  }
-
-  // Reset and start video playback
-  const resetAndPlayVideo = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0
-      videoRef.current.play().catch((err) => {
-        console.error("Error playing video:", err)
-        setError("Could not play video. Check if the format is supported.")
-      })
-    }
   }
 
   // Fetch video preview path from backend
@@ -61,26 +49,20 @@ export default function VideoPreview({ video }: VideoPreviewProps) {
       setCurrentTime("00:00:00")
     }
 
-    // Clear any existing timeout
-    if (loopTimeoutRef.current) {
-      clearTimeout(loopTimeoutRef.current)
-    }
   }, [video])
 
   // Set up video playback when preview path is available
   useEffect(() => {
     if (previewPath && videoRef.current) {
-      // Clear any existing timeout
-      if (loopTimeoutRef.current) {
-        clearTimeout(loopTimeoutRef.current)
-      }
-
       // Set up event listeners
       const videoElement = videoRef.current
 
       const handleCanPlay = () => {
         setIsLoading(false)
-        resetAndPlayVideo()
+        videoElement.play().catch((err) => {
+          console.error("Error playing video:", err)
+          setError("Could not play video. Check if the format is supported.")
+        })
       }
 
       const handleError = () => {
@@ -109,9 +91,6 @@ export default function VideoPreview({ video }: VideoPreviewProps) {
         videoElement.removeEventListener("timeupdate", handleTimeUpdate)
         videoElement.removeEventListener("loadstart", handleLoadStart)
 
-        if (loopTimeoutRef.current) {
-          clearTimeout(loopTimeoutRef.current)
-        }
       }
     }
   }, [previewPath])
@@ -161,6 +140,7 @@ export default function VideoPreview({ video }: VideoPreviewProps) {
                 playsInline
                 autoPlay
                 loop
+                preload="auto"
                 style={{ maxHeight: "calc(100% - 8px)", maxWidth: "calc(100% - 8px)" }}
               />
             )}
